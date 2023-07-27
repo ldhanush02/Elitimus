@@ -2,30 +2,44 @@ const exp=require("express");
 const Scoreapp=require("./API/Score");
 const app=exp()
 require('dotenv').config()
-
+const cors = require('cors');
+const corsOptions ={
+    origin:'http://localhost:4000', 
+    credentials:true,            //access-control-allow-credentials:true
+    optionSuccessStatus:200
+}
+app.use(cors(corsOptions));
 
 const path=require('path');
 app.use(exp.static(path.join(__dirname,"./build")))
 const Userapp=require("./API/user")
 const Dburl=process.env.DATA_BASE_CONNECTION_URL;
 const mclient=require("mongodb").MongoClient;
+
+app.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Origin, X-Requested-With, Content-Type, Accept"
+    );
+    next();
+  });
 app.use('/user-api',Userapp)
 app.use('/Score-api',Scoreapp)
 
 // ---------------deployment--------------- 
-// if (process.env.NODE_ENV==="production"){
-//     app.use(exp.static(path.join(__dirname,"./build")))
-//     app.get(/^\/(?!api).*/, (req, res) => { // don't serve api routes to react app
-//       res.sendFile(path.join(__dirname, './build/index.html'));
-//     });
-//     app.get('*',(request,response)=>{
-//       response.sendFile(path.resolve(__dirname,'build','index.html'))
-//     })
-//   }
+if (process.env.NODE_ENV==="production"){
+    app.use(exp.static(path.join(__dirname,"./build")))
+    app.get(/^\/(?!api).*/, (req, res) => { // don't serve api routes to react app
+      res.sendFile(path.join(__dirname, './build/index.html'));
+    });
+    app.get('*',(request,response)=>{
+      response.sendFile(path.resolve(__dirname,'build','index.html'))
+    })
+  }
   
   
   // ---------------deployment----------------
-
 
 
 mclient.connect(Dburl)
